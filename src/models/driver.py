@@ -1,45 +1,78 @@
+import asyncio
+import logging
+import socket
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from dto.base import DriverDTO, GwinstekDriverDTO
+from dto.base import DriverConfig, GwinstekDriverConfig
 
-T_co = TypeVar("T_co", bound=DriverDTO, covariant=True)
+logger = logging.getLogger(__name__)
+T_co = TypeVar("T_co", bound=DriverConfig, covariant=True)
 
 
 class Driver(ABC, Generic[T_co]):
     """Абстрактная модель драйвера"""
-    def __init__(self, data: T_co) -> None:
+    def __init__(self, params: T_co) -> None:
         """Конструктор класса
 
         Args:
-            data (T_co): Исходные данные драйвера
+            params (T_co): Исходные данные драйвера
         """
-        self._data = data
+        self.params = params
+        self._socket = None
 
+    @property
     @abstractmethod
-    def turn_on(self) -> dict[str, str]:
-        pass
-
-
-    @abstractmethod
-    def turn_off(self) -> dict[str, str]:
-        pass
+    async def connect(self) -> dict[str, str]:
+        """Получить/установить соединение"""
 
 
     @abstractmethod
-    def health_check(self) -> list[T_co]:
-        pass
+    async def run_command(self, command: str) -> str:
+        """Выполнить команду
 
+        Args:
+            command (str): текст команды
 
-class DriverGwinstek(Driver[GwinstekDriverDTO]):
-    """"""
-    def __init__(self, data: GwinstekDriverDTO):
-        """"""
-        super().__init__(data)
+        Returns:
+            str: ответ прибора
+        """
 
-    def turn_on(self) -> dict[str, str]:
-        return super().turn_on()
+class DriverGwinstek(Driver[GwinstekDriverConfig]):
+    """Интерфейс для подключения к драйверу"""
+    _READ_BUF_SIZE = 1024
+    def __init__(self, params: GwinstekDriverConfig):
+        """Инициализация логики
 
-    def turn_off(self) -> dict[str, str]:
-        return super().turn_off()
+        Args:
+            params (GwinstekDriverDTO): драйвер
+        """
+        super().__init__(params)
 
+    @property
+    async def connect(self):
+        """Получить/установить соединение"""
+        if not self._socket:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            awaitable =  asyncio.to_thread(self._socket.connect, (self.params.host, self.params.port))
+            task = asyncio.create_task(awaitable)
+            await task
+            logger.info("Connected to %s:%p", self.params.host, self.params.port)
+        return self._socket
+
+    async def run_command(self, command: str) -> str:
+        """Выполнить команду
+
+        Args:
+            command (str): текст команды
+
+        Returns:
+            str: ответ прибора
+        """
+        command += "\n"
+        # пакуем блокирующий код в поток чтобы выполнить асинхронно
+        writer = asyncio.create_task(asyncio.to_thread(self.connect.sendall, command.encode()))
+        reader = asyncio.create_task(asyncio.to_thread(self.connect.recv, self._READ_BUF_SIZE))
+        await writer
+        response = await reader
+        return response.decode()
