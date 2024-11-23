@@ -9,5 +9,10 @@ CUSTOM_LOGGERS: Final[list[str]] = [
     "uvicorn.access",
 ]
 
+DriverConfig = {
+    "host": "localhost",
+    "port": 8010,
+    "channels": 4,
+}
 
 FLOAT_PRECISION: Final[int] = 2
