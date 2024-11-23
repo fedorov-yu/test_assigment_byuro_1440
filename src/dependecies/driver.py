@@ -1,6 +1,9 @@
-from src.services.driver import GwinsekDriverService
+from config import DriverConfig
+from src.dto.base import GwinstekDriverConfig
+from src.models.driver import DriverGwinstek
+from src.services.driver import GwinstekDriverService
 
 
-def get_driver_service() -> GwinsekDriverService:
-    """"""
-    return GwinsekDriverService
+def get_driver_service() -> GwinstekDriverService:
+    """Получить сервис для работы с драйвером"""
+    return GwinstekDriverService(DriverGwinstek(GwinstekDriverConfig(**DriverConfig)))
