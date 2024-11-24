@@ -11,11 +11,93 @@ python = "^3.10"
 fastapi = "^0.115.5"
 uvicorn = "^0.32.1"
 colorlog = "^6.9.0"
+aiofiles = "^24.1.0"
 
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.3"
 coverage = "^7.6.7"
+ruff = "^0.7.4"
+mypy = "^1.13.0"
+deptry = "^0.21.1"
+pytest-asyncio = "^0.24.0"
+httpx = "^0.27.2"
+
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN", # flake8-annotations
+    "D100", # undocumented-public-module
+    "D104", # undocumented-public-package
+    "D415", # ends-in-punctuation
+    "TD", # flake8-todos
+    "FIX", # flake8-fixme
+    "RUF001", # ambiguous-unicode-character-string
+    "RUF002", # ambiguous-unicode-character-docstring
+    "RUF003", # ambiguous-unicode-character-comment
+    "DTZ", # flake8-datetimez
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # assert
+
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "-v"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "e2e",
+    "unit",
+]
+
+
+[tool.coverage.run]
+source = ["src"]
+data_file = ".coverage/coverage"
+command_line = "-m pytest"
+
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:"
+]
+show_missing = true
+
+
+[tool.coverage.html]
+directory = ".coverage/htmlcov"
+
+
+[tool.coverage.xml]
+output = ".coverage/coverage.xml"
+
+
+[tool.coverage.json]
+output = ".coverage/coverage.json"
+
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["uvicorn", "uvloop"]
+
 
 [build-system]
 requires = ["poetry-core"]

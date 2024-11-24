@@ -12,7 +12,7 @@ CUSTOM_LOGGERS: Final[list[str]] = [
     "uvicorn.access",
 ]
 
-driver_config = {
+driver_config: dict[str, str | int] = {
     "host": "localhost",
     "port": 8010,
     "channels": 4,
