@@ -2,11 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from schemas import driver as driver_schemas
-from schemas.base import BaseStatusResponse
-from src.dependecies.driver import get_driver_service
-from src.dto.base import TelemetryFieldsHint
-from src.services.driver import GwinstekDriverService
+from ..dependecies.driver import get_driver_service
+from ..dto.base import TelemetryFieldsHint
+from ..schemas import driver as driver_schemas
+from ..schemas.base import BaseStatusResponse
+from ..services.driver import GwinstekDriverService
 
 driver_router = APIRouter(prefix="/driver", tags=["driver"])
 

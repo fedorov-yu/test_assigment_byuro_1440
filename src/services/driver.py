@@ -1,6 +1,10 @@
+import asyncio
 import logging
-from datetime import datetime
+from datetime import date, datetime
 
+import aiofiles
+
+from src.config import LOG_DELAY, LOG_PATH
 from src.dto.base import GwinstekDriverConfig, TelemetryFieldsHint
 from src.models.driver import Driver
 
@@ -53,3 +57,27 @@ class GwinstekDriverService:
                 "current": float(await self.driver.run_command(f"MEASURE{i}:CURRENT?")),
             } for i in range(1, self.driver.params.channels+1)
         ]
+
+    async def log_telemetry(self) -> None:
+        """Залогировать параметры телеметрии"""
+        while True:
+            log_datas = await self.get_telemetry()
+            async with aiofiles.open(LOG_PATH / f"log_{date.today()}.txt", "wb") as log_file:
+                msg = "\n".join([self.__pretty_log(log) for log in log_datas])
+                await log_file.write(msg)
+            await asyncio.sleep(LOG_DELAY)
+
+    @staticmethod
+    def __pretty_log(data: TelemetryFieldsHint) -> str:
+        """Причесать лог к строке
+
+        Args:
+            data (TelemetryFieldsHint): объект измерений
+
+        Returns:
+            str: строка для лога
+        """
+        return (
+            f"{data['measured_dt']}:: CHANNEL:{data['channel']}::"
+            f"CURRENT:{data['current']}:: VOLTAGE:{data['voltage']}"
+        )

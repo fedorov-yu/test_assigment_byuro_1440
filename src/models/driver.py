@@ -4,7 +4,7 @@ import socket
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from dto.base import DriverConfig, GwinstekDriverConfig
+from ..dto.base import DriverConfig, GwinstekDriverConfig
 
 logger = logging.getLogger(__name__)
 T_co = TypeVar("T_co", bound=DriverConfig, covariant=True)
@@ -26,6 +26,9 @@ class Driver(ABC, Generic[T_co]):
     async def connect(self) -> dict[str, str]:
         """Получить/установить соединение"""
 
+    @abstractmethod
+    def disconnect(self) -> None:
+        """Отключить соединение"""
 
     @abstractmethod
     async def run_command(self, command: str) -> str:
@@ -60,6 +63,10 @@ class DriverGwinstek(Driver[GwinstekDriverConfig]):
             logger.info("Connected to %s:%p", self.params.host, self.params.port)
         return self._socket
 
+    def disconnect(self) -> None:
+        if self._socket:
+            self._socket.close()
+
     async def run_command(self, command: str) -> str:
         """Выполнить команду
 
@@ -71,8 +78,8 @@ class DriverGwinstek(Driver[GwinstekDriverConfig]):
         """
         command += "\n"
         # пакуем блокирующий код в поток чтобы выполнить асинхронно
-        writer = asyncio.create_task(asyncio.to_thread(self.connect.sendall, command.encode()))
-        reader = asyncio.create_task(asyncio.to_thread(self.connect.recv, self._READ_BUF_SIZE))
+        writer = asyncio.create_task(asyncio.to_thread((await self.connect).sendall, command.encode()))
+        reader = asyncio.create_task(asyncio.to_thread((await self.connect).recv, self._READ_BUF_SIZE))
         await writer
         response = await reader
         return response.decode()
