@@ -13,6 +13,7 @@ async def test_correct_commands_used(driver_service: GwinstekDriverService, mock
     assert target_measure.get("voltage") == mock_command_data["voltage"]
     assert target_measure.get("channel") == mock_command_data["channel"]
     assert target_measure.get("current") == mock_command_data["current"]
+    await driver_service.disable_channel(mock_command_data["channel"])
 
 
 
